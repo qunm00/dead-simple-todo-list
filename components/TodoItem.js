@@ -166,6 +166,8 @@ const TodoItem = ({
         <Text style={styles.textStyle}>{task}</Text>
       </Animated.View>
 
+      <Text>Hello</Text>
+
       <Animated.View
         style={[
           styles.rightButtonContainer, 
