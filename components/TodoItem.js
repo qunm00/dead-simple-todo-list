@@ -11,18 +11,19 @@ import {
 import { Icon } from 'react-native-elements'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
+const FORCE_TO_OPEN_THRESHOLD = SCREEN_WIDTH * 0.40
+const SHOW_BUTTON_THRESHOLD = SCREEN_WIDTH * 0.20
+const BUTTON_WIDTH = SCREEN_WIDTH * 0.20 
 const SCROLL_THRESHOLD = 0 
 const FORCING_DURATION = 350
-const FORCE_TO_OPEN_THRESHOLD = SCREEN_WIDTH * 0.4 
-const RIGHT_BUTTON_THRESHOLD = SCREEN_WIDTH * 0.15
-const LEFT_BUTTON_THRESHOLD = SCREEN_WIDTH * 0.15 
 
 const TodoItem = ({
+  id,
   task,
+  finished,
   cleanFromScreen,
-  leftButtonPressed,
+  markCompleted,
   deleteButtonPressed,
-  editButtonPressed
 }) => {
   const position = new Animated.ValueXY(0, 0)
 
@@ -46,9 +47,9 @@ const TodoItem = ({
     onPanResponderRelease: (event, gesture) => {
       position.flattenOffset()
       if (gesture.dx > 0) {
-        userSwipedRight(gesture)
+        userSwipedRight()
       } else {
-        userSwipedLeft(gesture)
+        userSwipedLeft()
       }
     },
     onPanResponderTerminate: () => {
@@ -67,20 +68,25 @@ const TodoItem = ({
     }).start()
   }
 
-  const userSwipedLeft = (gesture) => {
-    if (gesture.dx <= -(RIGHT_BUTTON_THRESHOLD)) {
+  const userSwipedLeft = () => {
+    if (position.x._value <= -FORCE_TO_OPEN_THRESHOLD) {
+      completeSwipe('left', () => deleteButtonPressed(task))
+    } else if (
+      position.x._value <= -SHOW_BUTTON_THRESHOLD &&
+      position.x._value > -FORCE_TO_OPEN_THRESHOLD
+    ) {
       showButton('left')
     } else {
       resetPosition()
     }
   }
 
-  const userSwipedRight = (gesture) => {
-    if (gesture.dx >= FORCE_TO_OPEN_THRESHOLD) {
-      completeSwipe('right', () => leftButtonPressed())
+  const userSwipedRight = () => {
+    if (position.x._value >= FORCE_TO_OPEN_THRESHOLD) {
+      completeSwipe('right', () => {})
     } else if (
-      gesture.dx >= LEFT_BUTTON_THRESHOLD && 
-      gesture.dx < FORCE_TO_OPEN_THRESHOLD
+      position.x._value >= SHOW_BUTTON_THRESHOLD && 
+      position.x._value < FORCE_TO_OPEN_THRESHOLD
     ) {
       showButton('right')
     } else {
@@ -89,7 +95,7 @@ const TodoItem = ({
   }
 
   const showButton = (side) => {
-    const x = side === 'right' ? SCREEN_WIDTH / 4 : -SCREEN_WIDTH * .40  
+    const x = side === 'right' ? BUTTON_WIDTH + 20 : -BUTTON_WIDTH - 20
     Animated.timing(position, {
       toValue: { x, y: 0},
       duration: 600,
@@ -100,12 +106,12 @@ const TodoItem = ({
 
   const getLeftButtonProps = () => {
     const opacity = position.x.interpolate({
-      inputRange: [35, 75, 320],
-      outputRange: [0, 1, 0.25]
+      inputRange: [0, SHOW_BUTTON_THRESHOLD, SCREEN_WIDTH],
+      outputRange: [0, 1, 0] 
     })
     const width = position.x.interpolate({
-      inputRange: [0, 70],
-      outputRange: [0, 70]
+      inputRange: [0, SHOW_BUTTON_THRESHOLD, FORCE_TO_OPEN_THRESHOLD],
+      outputRange: [BUTTON_WIDTH, BUTTON_WIDTH, FORCE_TO_OPEN_THRESHOLD]
     })
     return {
       opacity,
@@ -115,11 +121,16 @@ const TodoItem = ({
 
   const getRightButtonProps = () => {
     const opacity = position.x.interpolate({
-      inputRange: [-SCREEN_WIDTH, -120, -35],
+      inputRange: [-SCREEN_WIDTH, -SHOW_BUTTON_THRESHOLD, 0],
       outputRange: [0, 1, 0]
     })
+    const width = position.x.interpolate({
+      inputRange: [-FORCE_TO_OPEN_THRESHOLD, -SHOW_BUTTON_THRESHOLD, 0],
+      outputRange: [FORCE_TO_OPEN_THRESHOLD, BUTTON_WIDTH, BUTTON_WIDTH]
+    })
     return {
-      opacity
+      opacity,
+      width
     }
   }
 
@@ -129,7 +140,12 @@ const TodoItem = ({
       toValue: { x, y: 0 },
       duration: FORCING_DURATION,
       useNativeDriver: false
-    }).start((id) => cleanFromScreen(id))
+    }).start(() => {
+        dimension === 'left'
+        ? cleanFromScreen(id)
+        : markCompleted(id)
+      }
+    )
     callback()
   }
 
@@ -137,13 +153,16 @@ const TodoItem = ({
     <View style={styles.container}>
       <Animated.View
         style={[
-          styles.leftButtonContainer, 
+          styles.buttonContainer, 
+          {
+            backgroundColor: '#50f442',
+          },
           getLeftButtonProps()
         ]}
       >
         <TouchableOpacity 
           onPress={() => 
-            completeSwipe('right', () => leftButtonPressed())
+            completeSwipe('right', () => {})
           } 
         >
           <Icon
@@ -154,28 +173,53 @@ const TodoItem = ({
             style={styles.textStyle}
             numberOfLines={1}
           >
-            Accept
+            Done 
           </Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View
-        style={[styles.textContainer, position.getLayout()]}
-        {...panResponder.panHandlers}
-      >
-        <Text style={styles.textStyle}>{task}</Text>
-      </Animated.View>
+      {!finished &&
+        <Animated.View
+          style={[styles.textContainer, position.getLayout()]}
+          {...panResponder.panHandlers}
+        >
+          <Text style={styles.textStyle}>{task}</Text>
+        </Animated.View>
+      }
 
-      <Text>Hello</Text>
+      {finished &&
+        <View
+          style={[
+            styles.textContainer, 
+            {
+              backgroundColor: '#50f442',
+              opacity: 0.2
+            }
+        ]}
+        >
+          <Text style={[styles.textStyle]}>
+            {task}
+          </Text>
+        </View>
+      }
 
+
+      <View>
+
+      </View>
       <Animated.View
         style={[
-          styles.rightButtonContainer, 
-          { left: SCREEN_WIDTH * 0.52 }, 
-          getRightButtonProps()
+          styles.buttonContainer, 
+          { 
+            right: 0,
+            backgroundColor: '#D50000',
+          }, 
+          getRightButtonProps(),
         ]}
       >
-        <TouchableOpacity onPress={() => completeSwipe('left', () => deleteButtonPressed())}>
+        <TouchableOpacity 
+          onPress={() => completeSwipe('left', () => deleteButtonPressed(task))}
+        >
           <Icon
             type="font-awesome"
             name="trash"
@@ -183,22 +227,6 @@ const TodoItem = ({
           <Text style={styles.textStyle}>Delete</Text>
         </TouchableOpacity>
       </Animated.View>
-      <Animated.View
-        style={[
-          styles.rightButtonContainer, 
-          { backgroundColor: '#FFC400' }, 
-          getRightButtonProps()
-        ]}
-      >
-        <TouchableOpacity onPress={() => editButtonPressed()}>
-          <Icon
-            type="font-awesome"
-            name="edit"
-          />
-          <Text style={styles.textStyle}>Edit</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
     </View>
   )
 }
@@ -207,49 +235,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
-    marginBottom: 5,
+    marginVertical: 5,
     marginHorizontal: 5,
-    marginTop: 30,
     elevation: 3
   },
   textContainer: {
     flex: 1,
     paddingHorizontal: 30,
     paddingVertical: 35,
-    width: SCREEN_WIDTH / 1.03,
-    marginHorizontal: 3,
     borderRadius: 7,
     backgroundColor: '#CFD8DC',
     elevation: 3,
     zIndex: 3
   },
   textStyle: {
-    fontSize: 17
+    fontSize: 17,
   },
-  leftButtonContainer: {
+  buttonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 5,
     borderRadius: 7,
     paddingHorizontal: 18,
     paddingVertical: 23,
-    backgroundColor: '#50f442',
     position: 'absolute',
-    elevation: 3
-  },
-  rightButtonContainer: {
-    position: 'absolute',
-    left: SCREEN_WIDTH * 0.74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 5,
-    borderRadius: 7,
-    paddingHorizontal: 18,
-    paddingVertical: 23,
     elevation: 3,
-    backgroundColor: '#D50000',
-    zIndex: 1
-  }
+  },
 })
 
 export default TodoItem

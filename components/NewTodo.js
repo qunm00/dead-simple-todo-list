@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react'
-import { StyleSheet, Modal, Platform, View, Alert } from 'react-native'
-import { Div, Button, Input, Icon, Text } from 'react-native-magnus'
+import { useState } from 'react'
+import { 
+  View, 
+  StyleSheet,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native'
+import { Icon } from 'react-native-elements'
 import DateTimePicker from '@react-native-community/datetimepicker'
 
-import Global from '../Global'
-import createTodo from '../utils/createTodo'
+import {
+  createTodo,
+  getTodo
+} from '../utils/dataHelper'
 
 import dayjs from 'dayjs'
 import toObject from 'dayjs/plugin/toObject'
@@ -12,15 +20,12 @@ import objectSupport from 'dayjs/plugin/objectSupport'
 dayjs.extend(toObject)
 dayjs.extend(objectSupport)
 
-const inputContainerSizing = Global.INPUT_CONTAINER_SIZING
+const inputContainerSizing = 50
 
 const NewTodo = ({ 
-    todos,
     setTodos
   }) => {
     const [task, setTask] = useState('')
-    const [date, setDate] = useState({})
-    const [mode, setMode] = useState('date')
     const [datePickerVisible, setDatePickerVisible] = useState(false)
 
     const handlePressNewTask = () => {
@@ -28,26 +33,11 @@ const NewTodo = ({
     }
 
     const handleDateTimePicker = ({ nativeEvent: { timestamp }, type }) => {
-      if (mode === 'date' && type === 'set') {
+      if (type === 'set') {
         const { years, months, date } = dayjs(timestamp).toObject()
-        setDate({
-          years,
-          months,
-          date
-        })
-        setMode('time')
-        return
-      } 
-
-      if (mode === 'time' && type === 'set') {
-        const { hours, minutes, seconds } = dayjs(timestamp).toObject()
         const deadline = dayjs({
-          ...date,
-          hours,
-          minutes,
-          seconds
+          years, months, date
         })
-
         Alert.alert(
           'Adding a new to do',
           `${task} will need to be done by ${deadline.toString()}`,
@@ -59,54 +49,50 @@ const NewTodo = ({
             {
               text: 'Confirm',
               style: 'default',
-              onPress: () => {
-                const newTodo = createTodo(task, deadline.toDate())
-                setTodos([...todos, newTodo])
+              onPress: async () => {
+                const date = dayjs().format('DDMMYY')
+                await createTodo(task, deadline)
+                const data = await getTodo(date)
+                setTodos(data)
               }
             }
           ]
         )
-      }
+      } 
       setDatePickerVisible(false)
       setTask('')
-      setMode('date')
     }
 
     return (
-      <Div style={styles.inputContainer}>
+      <View style={styles.inputContainer}>
         {
           datePickerVisible &&
             <DateTimePicker
               value={new Date()}
-              mode={mode}
+              mode='date'
               minimumDate={new Date()}
               display='default'
               onChange={handleDateTimePicker}
             />
         }
 
-        <Input
-          style={{flexGrow: 1}}
+        <TextInput
+          style={styles.inputBar}
           value={task}
           placeholder="what's to be done?"
-          borderColor='white'
           onChangeText={(text) => setTask(text)}
         />
-        <Button
-          bg="gray200"
-          borderColor="black"
-          w={inputContainerSizing}
-          h={inputContainerSizing}
+        <TouchableOpacity
+          style={styles.submitButton}
           onPress={handlePressNewTask}
-          suffix={
-            <Icon 
-              name='sign-in-alt'
-              fontFamily="FontAwesome5"
-              fontSize='xl'
-            />
-          }
-        />
-      </Div>
+        >
+          <Icon
+            type="font-awesome-5"
+            name="plus-square"
+            size={26}
+          />
+        </TouchableOpacity>
+      </View>
     )
 }
 
@@ -114,8 +100,21 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     marginBottom: 10,
-    height: inputContainerSizing
+    height: inputContainerSizing,
   },
+  inputBar: {
+    flexGrow: 1,
+    fontSize: 16
+  },
+  submitButton: {
+    backgroundColor: "#d3d3d3",
+    borderColor: "black",
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: inputContainerSizing + 5,
+    height: inputContainerSizing + 5
+  }
 })
 
 export default NewTodo
