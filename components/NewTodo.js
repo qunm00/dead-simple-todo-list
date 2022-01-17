@@ -11,7 +11,6 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 
 import {
   createTodo,
-  getTodo
 } from '../utils/dataHelper'
 
 import dayjs from 'dayjs'
@@ -23,24 +22,28 @@ dayjs.extend(objectSupport)
 const inputContainerSizing = 50
 
 const NewTodo = ({ 
-    setTodos
+    currentDate,
+    isCurrent,
+    fetchData
   }) => {
+
     const [task, setTask] = useState('')
     const [datePickerVisible, setDatePickerVisible] = useState(false)
+    const [inputFocus, setInputFocus] = useState(false)
 
     const handlePressNewTask = () => {
-      setDatePickerVisible(true)
+      if (task) {
+        setDatePickerVisible(true)
+      }
     }
+
 
     const handleDateTimePicker = ({ nativeEvent: { timestamp }, type }) => {
       if (type === 'set') {
-        const { years, months, date } = dayjs(timestamp).toObject()
-        const deadline = dayjs({
-          years, months, date
-        })
+        const deadline = dayjs(timestamp)
         Alert.alert(
           'Adding a new to do',
-          `${task} will need to be done by ${deadline.toString()}`,
+          `${task} will be added to ${deadline.format('dddd DD MMMM, YYYY')}`,
           [
             {
               text: 'Cancel',
@@ -50,10 +53,8 @@ const NewTodo = ({
               text: 'Confirm',
               style: 'default',
               onPress: async () => {
-                const date = dayjs().format('DDMMYY')
                 await createTodo(task, deadline)
-                const data = await getTodo(date)
-                setTodos(data)
+                await fetchData()
               }
             }
           ]
@@ -68,7 +69,7 @@ const NewTodo = ({
         {
           datePickerVisible &&
             <DateTimePicker
-              value={new Date()}
+              value={currentDate.toDate()}
               mode='date'
               minimumDate={new Date()}
               display='default'
@@ -77,14 +78,28 @@ const NewTodo = ({
         }
 
         <TextInput
-          style={styles.inputBar}
+          style={[
+            styles.inputBar, 
+            inputFocus 
+            ? { opacity: 1 } 
+            : { opacity: 0.5 },
+            isCurrent
+            ? { borderColor: '#222831' }
+            : { borderColor: '#EEEEEE'}
+          ]}
           value={task}
           placeholder="what's to be done?"
           onChangeText={(text) => setTask(text)}
+          onFocus={() => setInputFocus(true)}
+          onEndEditing={() => setInputFocus(false)}
+          editable={isCurrent}
         />
         <TouchableOpacity
-          style={styles.submitButton}
+          style={[
+            styles.submitButton,
+          ]}
           onPress={handlePressNewTask}
+          activeOpacity={task ? 0.2 : 1}
         >
           <Icon
             type="font-awesome-5"
@@ -104,16 +119,19 @@ const styles = StyleSheet.create({
   },
   inputBar: {
     flexGrow: 1,
-    fontSize: 16
+    fontSize: 16,
+    marginHorizontal: 5,
+    padding: 10,
+    borderWidth: 2,
+    borderRadius: 10
   },
   submitButton: {
-    backgroundColor: "#d3d3d3",
-    borderColor: "black",
+    backgroundColor: "#00ADB5",
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    width: inputContainerSizing + 5,
-    height: inputContainerSizing + 5
+    width: inputContainerSizing,
+    height: inputContainerSizing,
   }
 })
 

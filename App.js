@@ -4,100 +4,92 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { useEffect, useState } from 'react';
 import { 
-  SafeAreaView, 
   StyleSheet,
-  FlatList, 
   StatusBar, 
-  ToastAndroid,
-  Text,
-  View
+  View,
+  Modal,
 } from 'react-native';
 
-import NewTodo from './components/NewTodo'
-import TodoItem from './components/TodoItem'
+import { getTodo } from './utils/dataHelper';
+import Header from './components/Header';
+import Body from './components/Body';
+import EditTodo from './components/EditTodo';
 
-const now = dayjs();
-
-(async () => {
-  await AsyncStorage.clear()
-})()
-
-
+// (async () => {
+//   const asyncStorageKeys = await AsyncStorage.getAllKeys()
+//   if (asyncStorageKeys.length > 0) {
+//     if (Platform.OS === 'android') {
+//       await AsyncStorage.clear()
+//     }
+//     if (Platform.OS === 'ios') {
+//       await AsyncStorage.multiRemove(asyncStorageKeys)
+//     }
+//   }
+// })()
 
 const  App = () => {
   const [todos, setTodos] = useState(null)
+  const [currentDate, setCurrentDate] = useState(dayjs())
+  const [modalVisible, setModalVisible] = useState(false)
+  const [todoId, setTodoId] = useState(null)
 
-  const cleanFromScreen = (id) => {
-    const data = todos.filter(item => {
-      return item.id !== id
-    })
-    setTodos(data)
+  const roundDownToDay = (time) => {
+    const roundedTime = time - (time % 86400000)
+    return roundedTime
   }
 
-  const markCompleted = (id) => {
-    const data = todos.map(item => (
-      item.id === id
-      ? {...item, finished: true}
-      : item
-    ))
-    setTodos(data)
+  const isCurrent = !dayjs(roundDownToDay(currentDate)).isBefore(dayjs(roundDownToDay(dayjs())))
+
+  const fetchData = async () => {
+    const todos = await getTodo(currentDate.format('DDMMYY'))
+    setTodos(todos)
   }
 
-  const deleteButtonPressed = (task) => {
-    ToastAndroid.show(
-      `${task} deleted`,
-      ToastAndroid.SHORT
-    )
-  }
-
-  const keyExtractor = item => item.id
-  const renderItem = ({ item }) => (
-    <TodoItem
-      key={item.id}
-      id={item.id}
-      task={item.task}
-      finished={item.finished}
-      cleanFromScreen={(id) => cleanFromScreen(id)}
-      markCompleted={(id) => markCompleted(id)}
-      deleteButtonPressed={deleteButtonPressed}
-    />
-  )
+  useEffect(() => {
+    fetchData()
+  }, [currentDate])
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text
-          style={styles.headerTextStyle}
-        >
-          {now.format('DD MMMM, YYYY')}
-        </Text>
-      </View>
-      <NewTodo 
-        setTodos={setTodos}
+    <View
+      style={styles.container}
+    >
+      <Modal
+        animationType='slide'
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <EditTodo 
+          id={todoId}
+          currentDate={currentDate}
+          setModalVisible={setModalVisible}
+          fetchData={fetchData}
+        />
+      </Modal>
+      <Header
+        currentDate={currentDate}
+        setCurrentDate={setCurrentDate}
       />
-      <FlatList
-        data={todos}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
+      <Body
+        todos={todos}
+        currentDate={currentDate}
+        isCurrent={isCurrent}
+        fetchData={fetchData}
+        setModalVisible={setModalVisible}
+        setId={setTodoId}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    alignItems: 'center',
-  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
     padding: 10,
-    marginTop: StatusBar.currentHeight
+    marginTop: StatusBar.currentHeight,
   },
-  headerTextStyle: {
-    fontSize: 24,
-    fontWeight: 'bold'
-  }
+
 });
 
 export default App

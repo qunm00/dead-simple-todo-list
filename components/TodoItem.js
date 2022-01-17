@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { 
   View,
   Text,
@@ -9,24 +10,38 @@ import {
   Easing
 } from 'react-native'
 import { Icon } from 'react-native-elements'
+import { STATUS } from '../Global'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 const FORCE_TO_OPEN_THRESHOLD = SCREEN_WIDTH * 0.40
 const SHOW_BUTTON_THRESHOLD = SCREEN_WIDTH * 0.20
-const BUTTON_WIDTH = SCREEN_WIDTH * 0.20 
+const BUTTON_WIDTH = SCREEN_WIDTH * 0.25 
 const SCROLL_THRESHOLD = 0 
 const FORCING_DURATION = 350
 
 const TodoItem = ({
   id,
   task,
-  finished,
+  status,
+  isCurrent,
   cleanFromScreen,
   markCompleted,
   deleteButtonPressed,
+  setModalVisible,
+  setId
 }) => {
-  const position = new Animated.ValueXY(0, 0)
+  let lastTap = new Date()
 
+  const handleDoubleTap = () => {
+    const currentTap = new Date()
+    if (currentTap - lastTap < 300) {
+      setId(id)
+      setModalVisible(true)
+    }
+    lastTap = new Date()
+  }
+
+  const position = new Animated.ValueXY(0, 0)
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => false, // we don't want the item to be animated with a touch
     onMoveShouldSetPanResponder: () => true, // we want to animate the item with a movement
@@ -95,7 +110,7 @@ const TodoItem = ({
   }
 
   const showButton = (side) => {
-    const x = side === 'right' ? BUTTON_WIDTH + 20 : -BUTTON_WIDTH - 20
+    const x = side === 'right' ? BUTTON_WIDTH + 60 : -BUTTON_WIDTH - 60 
     Animated.timing(position, {
       toValue: { x, y: 0},
       duration: 600,
@@ -149,86 +164,153 @@ const TodoItem = ({
     callback()
   }
 
-  return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.buttonContainer, 
-          {
-            backgroundColor: '#50f442',
-          },
-          getLeftButtonProps()
-        ]}
-      >
-        <TouchableOpacity 
-          onPress={() => 
-            completeSwipe('right', () => {})
-          } 
-        >
-          <Icon
-            type="font-awesome"
-            name="check"
-          />
-          <Text
-            style={styles.textStyle}
-            numberOfLines={1}
+  if (!isCurrent) {
+    return (
+      <View style={styles.container}>
+        {status === STATUS.neutral &&
+          <View
+            style={[styles.textContainer, {
+              opacity: 0.2
+            }]}
           >
-            Done 
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
+            <Text style={styles.textStyle}>{task}</Text>
+          </View>
+        }
 
-      {!finished &&
+        {status === STATUS.completed &&
+          <View
+            style={[
+              styles.textContainer, 
+              {
+                backgroundColor: '#50f442',
+                opacity: 0.2,
+              }
+          ]}
+          >
+            <Text style={[styles.textStyle]}>
+              {task}
+            </Text>
+          </View>
+        }
+
+        {status === STATUS.urgent &&
+          <View
+            style={[
+              styles.textContainer, 
+              {
+                backgroundColor: '#FF5959',
+                opacity: 0.2
+              }
+          ]}
+          >
+            <Text style={[styles.textStyle]}>
+              {task}
+            </Text>
+          </View>
+        }
+      </View>
+    )
+  } else {
+    return (
+      <View style={styles.container}>
         <Animated.View
-          style={[styles.textContainer, position.getLayout()]}
-          {...panResponder.panHandlers}
-        >
-          <Text style={styles.textStyle}>{task}</Text>
-        </Animated.View>
-      }
-
-      {finished &&
-        <View
           style={[
-            styles.textContainer, 
+            styles.buttonContainer, 
             {
               backgroundColor: '#50f442',
-              opacity: 0.2
-            }
-        ]}
+            },
+            getLeftButtonProps()
+          ]}
         >
-          <Text style={[styles.textStyle]}>
-            {task}
-          </Text>
-        </View>
-      }
+          <TouchableOpacity 
+            onPress={() => 
+              completeSwipe('right', () => {})
+            } 
+          >
+            <Icon
+              type="font-awesome"
+              name="check"
+            />
+            <Text
+              style={styles.textStyle}
+              numberOfLines={1}
+            >
+              Done 
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
 
+        {status === STATUS.neutral &&
+          <Animated.View
+            style={[styles.textContainer, position.getLayout()]}
+            {...panResponder.panHandlers}
+          >
+            <TouchableOpacity
+              onPress={handleDoubleTap}
+            >
+              <Text style={styles.textStyle}>{task}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        }
 
-      <View>
+        {status === STATUS.urgent &&
+          <Animated.View
+            style={[
+              styles.textContainer, 
+              {
+                backgroundColor: '#FF5959'
+              },
+              position.getLayout()
+            ]}
+            {...panResponder.panHandlers}
+          >
+            <TouchableOpacity
+              onPress={handleDoubleTap}
+            >
+              <Text style={styles.textStyle}>{task}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        }
 
+        {status === STATUS.completed &&
+          <View
+            style={[
+              styles.textContainer, 
+              {
+                backgroundColor: '#50f442',
+                opacity: 0.2,
+              }
+          ]}
+          >
+            <Text style={[styles.textStyle]}>
+              {task}
+            </Text>
+          </View>
+        }
+
+        <Animated.View
+          style={[
+            styles.buttonContainer, 
+            { 
+              right: 0,
+              backgroundColor: '#D50000',
+            }, 
+            getRightButtonProps(),
+          ]}
+        >
+          <TouchableOpacity 
+            onPress={() => completeSwipe('left', () => deleteButtonPressed(task))}
+          >
+            <Icon
+              type="font-awesome"
+              name="trash"
+            />
+            <Text style={styles.textStyle}>Delete</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
-      <Animated.View
-        style={[
-          styles.buttonContainer, 
-          { 
-            right: 0,
-            backgroundColor: '#D50000',
-          }, 
-          getRightButtonProps(),
-        ]}
-      >
-        <TouchableOpacity 
-          onPress={() => completeSwipe('left', () => deleteButtonPressed(task))}
-        >
-          <Icon
-            type="font-awesome"
-            name="trash"
-          />
-          <Text style={styles.textStyle}>Delete</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
-  )
+    )
+  }
 }
 
 const styles = StyleSheet.create({
