@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { setStatusBarBackgroundColor } from 'expo-status-bar'
 import { 
   View,
   Text,
@@ -20,22 +20,21 @@ const SCROLL_THRESHOLD = 0
 const FORCING_DURATION = 350
 
 const TodoItem = ({
-  id,
-  task,
-  status,
+  todo,
   isCurrent,
   cleanFromScreen,
   markCompleted,
   deleteButtonPressed,
   setModalVisible,
-  setId
+  setTodo
 }) => {
   let lastTap = new Date()
+  const { id, task, status } = todo
 
   const handleDoubleTap = () => {
     const currentTap = new Date()
     if (currentTap - lastTap < 300) {
-      setId(id)
+      setTodo(todo)
       setModalVisible(true)
     }
     lastTap = new Date()
@@ -43,12 +42,12 @@ const TodoItem = ({
 
   const position = new Animated.ValueXY(0, 0)
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => false, // we don't want the item to be animated with a touch
-    onMoveShouldSetPanResponder: () => true, // we want to animate the item with a movement
+    onStartShouldSetPanResponder: () => false, 
+    onMoveShouldSetPanResponder: () => true, 
     onResponderTerminationRequest: () => false,
     onPanResponderGrant: (event, gesture) => {
-      position.setOffset({x: position.x._value, y: 0}) // we specify the offset to continue swiping from the place where user left
-      position.setValue({ x: 0, y: 0}) // clearing the position
+      position.setOffset({x: position.x._value, y: 0})
+      position.setValue({ x: 0, y: 0})
     },
     onPanResponderMove: (event, gesture) => {
       if (gesture.dx >= SCROLL_THRESHOLD) {
@@ -164,50 +163,17 @@ const TodoItem = ({
     callback()
   }
 
-  if (!isCurrent) {
+  if (!isCurrent || (status === STATUS.completed)) {
     return (
       <View style={styles.container}>
-        {status === STATUS.neutral &&
           <View
             style={[styles.textContainer, {
+              backgroundColor: STATUS.colorDisplay[status],
               opacity: 0.2
             }]}
           >
             <Text style={styles.textStyle}>{task}</Text>
           </View>
-        }
-
-        {status === STATUS.completed &&
-          <View
-            style={[
-              styles.textContainer, 
-              {
-                backgroundColor: '#50f442',
-                opacity: 0.2,
-              }
-          ]}
-          >
-            <Text style={[styles.textStyle]}>
-              {task}
-            </Text>
-          </View>
-        }
-
-        {status === STATUS.urgent &&
-          <View
-            style={[
-              styles.textContainer, 
-              {
-                backgroundColor: '#FF5959',
-                opacity: 0.2
-              }
-          ]}
-          >
-            <Text style={[styles.textStyle]}>
-              {task}
-            </Text>
-          </View>
-        }
       </View>
     )
   } else {
@@ -217,7 +183,7 @@ const TodoItem = ({
           style={[
             styles.buttonContainer, 
             {
-              backgroundColor: '#50f442',
+              backgroundColor: 'lime',
             },
             getLeftButtonProps()
           ]}
@@ -240,60 +206,29 @@ const TodoItem = ({
           </TouchableOpacity>
         </Animated.View>
 
-        {status === STATUS.neutral &&
-          <Animated.View
-            style={[styles.textContainer, position.getLayout()]}
-            {...panResponder.panHandlers}
-          >
-            <TouchableOpacity
-              onPress={handleDoubleTap}
-            >
-              <Text style={styles.textStyle}>{task}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        }
-
-        {status === STATUS.urgent &&
-          <Animated.View
-            style={[
-              styles.textContainer, 
-              {
-                backgroundColor: '#FF5959'
-              },
-              position.getLayout()
-            ]}
-            {...panResponder.panHandlers}
-          >
-            <TouchableOpacity
-              onPress={handleDoubleTap}
-            >
-              <Text style={styles.textStyle}>{task}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        }
-
-        {status === STATUS.completed &&
-          <View
-            style={[
-              styles.textContainer, 
-              {
-                backgroundColor: '#50f442',
-                opacity: 0.2,
-              }
+        <Animated.View
+          style={[
+            styles.textContainer,
+            position.getLayout(),
+            {
+              backgroundColor: STATUS.colorDisplay[status],
+            }
           ]}
+          {...panResponder.panHandlers}
+        >
+          <TouchableOpacity
+            onPress={handleDoubleTap}
           >
-            <Text style={[styles.textStyle]}>
-              {task}
-            </Text>
-          </View>
-        }
+            <Text style={styles.textStyle}>{task}</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         <Animated.View
           style={[
             styles.buttonContainer, 
             { 
               right: 0,
-              backgroundColor: '#D50000',
+              backgroundColor: 'red',
             }, 
             getRightButtonProps(),
           ]}
@@ -326,7 +261,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 35,
     borderRadius: 7,
-    backgroundColor: '#CFD8DC',
     elevation: 3,
     zIndex: 3
   },

@@ -34,7 +34,7 @@ const Header = ({
       }
       <Pressable
         onPress={() => {
-          setCurrentDate(dayjs(currentDate).subtract(1, 'day'))
+          setCurrentDate(currentDate.subtract(1, 'day'))
         }}
       >
         <Icon
@@ -54,7 +54,7 @@ const Header = ({
       </Pressable>
       <Pressable
         onPress={() => {
-          setCurrentDate(dayjs(currentDate).add(1, 'day'))
+          setCurrentDate(currentDate.add(1, 'day'))
         }}
       >
         <Icon

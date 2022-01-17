@@ -14,7 +14,7 @@ const Body = ({
   currentDate,
   isCurrent,
   setModalVisible,
-  setId,
+  setTodo,
   fetchData
 }) => {
   const cleanFromScreen = async (id) => {
@@ -38,15 +38,13 @@ const Body = ({
   const renderItem = ({ item }) => (
     <TodoItem
       key={item.id}
-      id={item.id}
-      task={item.task}
-      status={item.status}
+      todo={item}
       isCurrent={isCurrent}
       cleanFromScreen={(id) => cleanFromScreen(id)}
       markCompleted={(id) => markCompleted(id)}
       deleteButtonPressed={deleteButtonPressed}
       setModalVisible={setModalVisible}
-      setId={setId}
+      setTodo={setTodo}
     />
   )
 

@@ -8,16 +8,13 @@ import {
 } from 'react-native'
 import { Icon } from 'react-native-elements'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import dayjs from 'dayjs'
 
 import {
   createTodo,
 } from '../utils/dataHelper'
 
-import dayjs from 'dayjs'
-import toObject from 'dayjs/plugin/toObject'
-import objectSupport from 'dayjs/plugin/objectSupport'
-dayjs.extend(toObject)
-dayjs.extend(objectSupport)
+
 
 const inputContainerSizing = 50
 
@@ -25,7 +22,7 @@ const NewTodo = ({
     currentDate,
     isCurrent,
     fetchData
-  }) => {
+}) => {
 
     const [task, setTask] = useState('')
     const [datePickerVisible, setDatePickerVisible] = useState(false)

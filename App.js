@@ -31,7 +31,7 @@ const  App = () => {
   const [todos, setTodos] = useState(null)
   const [currentDate, setCurrentDate] = useState(dayjs())
   const [modalVisible, setModalVisible] = useState(false)
-  const [todoId, setTodoId] = useState(null)
+  const [editTodo, setEditTodo] = useState(null)
 
   const roundDownToDay = (time) => {
     const roundedTime = time - (time % 86400000)
@@ -60,7 +60,7 @@ const  App = () => {
         statusBarTranslucent={true}
       >
         <EditTodo 
-          id={todoId}
+          editTodo={editTodo}
           currentDate={currentDate}
           setModalVisible={setModalVisible}
           fetchData={fetchData}
@@ -76,7 +76,7 @@ const  App = () => {
         isCurrent={isCurrent}
         fetchData={fetchData}
         setModalVisible={setModalVisible}
-        setId={setTodoId}
+        setTodo={setEditTodo}
       />
     </View>
   );

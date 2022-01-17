@@ -9,22 +9,10 @@ export const sortTodoList = (todoList) => {
   })
 }
 
-export const getTodo = async (key) => {
+export const getTodo = async (currentDate) => {
   try {
-    const jsonValue = await AsyncStorage.getItem(key)
-    return jsonValue != null ? sortTodoList(JSON.parse(jsonValue)) : null
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-export const getSingleTodo = async (key, id) => {
-  try {
-    const date = key.format('DDMMYY')
-    const jsonValue = await AsyncStorage.getItem(date)
-    const todoList = JSON.parse(jsonValue)
-    const todo = todoList.find(item => item.id === id)
-    return todo
+    const data = await AsyncStorage.getItem(currentDate)
+    return data != null ? sortTodoList(JSON.parse(data)) : null
   } catch (error) {
     console.log(error)
   }
@@ -59,9 +47,9 @@ export const updateTodo = async (
   currentDate
 ) => {
   try {
-    const data = await getTodo(dayjs(currentDate).format('DDMMYY'))
+    const data = await getTodo(currentDate.format('DDMMYY'))
     const filteredData = data.filter(item => item.id !== todo.id)
-    await AsyncStorage.setItem(dayjs(currentDate).format('DDMMYY'), JSON.stringify(filteredData))
+    await AsyncStorage.setItem(currentDate.format('DDMMYY'), JSON.stringify(filteredData))
 
     const updatedData = await getTodo(dayjs(todo.deadline).format('DDMMYY'))
     if (updatedData) {

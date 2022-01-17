@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import DropDownPicker from 'react-native-dropdown-picker'
@@ -12,29 +12,20 @@ import Constants from 'expo-constants'
 import dayjs from 'dayjs'
 
 import { STATUS } from '../Global'
-import { getSingleTodo, updateTodo } from '../utils/dataHelper'
+import { updateTodo } from '../utils/dataHelper'
 import { Dimensions } from 'react-native'
 
 const EditTodo = ({
-  id,
+  editTodo,
   currentDate,
   setModalVisible,
   fetchData
 }) => {
-  const [todo, setTodo] = useState({
-    task: '',
-    deadline: '',
-    status: ''
-  })
-  useEffect(() => {
-    (async () => {
-      const todo = await getSingleTodo(currentDate, id)
-      setTodo(todo)
-    })()
-  }, [])
+  const [todo, setTodo] = useState(editTodo)
+
   const [datePickerVisible, setDatePickerVisible] = useState(false)
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(STATUS.stringDisplay[todo.status])
+  const [value, setValue] = useState(todo.status)
   const [items, setItems] = useState([
     { label: 'urgent', value: STATUS.urgent },
     { label: 'neutral', value: STATUS.neutral },
@@ -67,10 +58,10 @@ const EditTodo = ({
     setModalVisible(false)
   }
 
-  const handlePressUpdate = () => {
-    fetchData()
-    updateTodo(todo, currentDate)
+  const handlePressUpdate = async () => {
+    await updateTodo(todo, currentDate)
     setModalVisible(false)
+    await fetchData()
   }
 
   return (
@@ -113,7 +104,6 @@ const EditTodo = ({
         >Status</Text>
         <DropDownPicker
           style={[styles.dropDownPickerStyle, {
-            // backgroundColor: todo ? STATUS.colorDisplay[todo.status] : 'white',
             backgroundColor: STATUS.colorDisplay[todo.status],
             height: '100%' 
           }]}
