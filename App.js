@@ -7,13 +7,12 @@ import {
   StyleSheet,
   StatusBar, 
   View,
-  Modal,
+
 } from 'react-native';
 
 import { getTodo } from './utils/dataHelper';
 import Header from './components/Header';
 import Body from './components/Body';
-import EditTodo from './components/EditTodo';
 
 // (async () => {
 //   const asyncStorageKeys = await AsyncStorage.getAllKeys()
@@ -30,8 +29,7 @@ import EditTodo from './components/EditTodo';
 const  App = () => {
   const [todos, setTodos] = useState(null)
   const [currentDate, setCurrentDate] = useState(dayjs())
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editTodo, setEditTodo] = useState(null)
+
 
   const roundDownToDay = (time) => {
     const roundedTime = time - (time % 86400000)
@@ -53,19 +51,7 @@ const  App = () => {
     <View
       style={styles.container}
     >
-      <Modal
-        animationType='slide'
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-        statusBarTranslucent={true}
-      >
-        <EditTodo 
-          editTodo={editTodo}
-          currentDate={currentDate}
-          setModalVisible={setModalVisible}
-          fetchData={fetchData}
-        />
-      </Modal>
+
       <Header
         currentDate={currentDate}
         setCurrentDate={setCurrentDate}
@@ -75,8 +61,6 @@ const  App = () => {
         currentDate={currentDate}
         isCurrent={isCurrent}
         fetchData={fetchData}
-        setModalVisible={setModalVisible}
-        setTodo={setEditTodo}
       />
     </View>
   );

@@ -34,7 +34,6 @@ const NewTodo = ({
       }
     }
 
-
     const handleDateTimePicker = ({ nativeEvent: { timestamp }, type }) => {
       if (type === 'set') {
         const deadline = dayjs(timestamp)

@@ -1,22 +1,26 @@
-import NewTodo from './NewTodo'
-import TodoItem from './TodoItem'
-import { deleteTodo, markTodoCompleted } from '../utils/dataHelper';
-
+import { useState } from 'react'
 import { 
   StyleSheet,
   ToastAndroid,
   View,
-  FlatList
+  FlatList,
+  Modal
 } from 'react-native';
+
+import NewTodo from './NewTodo'
+import TodoItem from './TodoItem'
+import EditTodo from './EditTodo';
+import { deleteTodo, markTodoCompleted } from '../utils/dataHelper';
 
 const Body = ({
   todos,
   currentDate,
   isCurrent,
-  setModalVisible,
-  setTodo,
   fetchData
 }) => {
+  const [modalVisible, setModalVisible] = useState(false)
+  const [editTodo, setEditTodo] = useState(null)
+
   const cleanFromScreen = async (id) => {
     await deleteTodo(id, currentDate)
     await fetchData()
@@ -44,7 +48,7 @@ const Body = ({
       markCompleted={(id) => markCompleted(id)}
       deleteButtonPressed={deleteButtonPressed}
       setModalVisible={setModalVisible}
-      setTodo={setTodo}
+      setTodo={setEditTodo}
     />
   )
 
@@ -55,6 +59,19 @@ const Body = ({
         fetchData={fetchData}
         isCurrent={isCurrent}
       />
+      <Modal
+        animationType='slide'
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <EditTodo 
+          editTodo={editTodo}
+          currentDate={currentDate}
+          setModalVisible={setModalVisible}
+          fetchData={fetchData}
+        />
+      </Modal>
       <FlatList
         data={todos}
         renderItem={renderItem}
