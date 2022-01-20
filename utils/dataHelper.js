@@ -9,6 +9,11 @@ export const sortTodoList = (todoList) => {
   })
 }
 
+export const roundDownToDay = (time) => {
+    const roundedTime = time - (time % 86400000)
+    return roundedTime
+  }
+
 export const getTodo = async (currentDate) => {
   try {
     const data = await AsyncStorage.getItem(currentDate)
@@ -23,7 +28,7 @@ export const createTodo = async (
   deadline
 ) => {
   try {
-    const date = deadline.format('DDMMYY')
+    const date = dayjs(roundDownToDay(deadline)).format('DDMMYY')
     const listTodo = await getTodo(date)
 
     const newTodo = {

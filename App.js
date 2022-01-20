@@ -5,12 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from 'react';
 import { 
   StyleSheet,
-  StatusBar, 
   View,
-
 } from 'react-native';
 
-import { getTodo } from './utils/dataHelper';
+import { getTodo, roundDownToDay } from './utils/dataHelper';
 import Header from './components/Header';
 import Body from './components/Body';
 
@@ -30,12 +28,6 @@ const  App = () => {
   const [todos, setTodos] = useState(null)
   const [currentDate, setCurrentDate] = useState(dayjs())
 
-
-  const roundDownToDay = (time) => {
-    const roundedTime = time - (time % 86400000)
-    return roundedTime
-  }
-
   const isCurrent = !dayjs(roundDownToDay(currentDate)).isBefore(dayjs(roundDownToDay(dayjs())))
 
   const fetchData = async () => {
@@ -51,7 +43,6 @@ const  App = () => {
     <View
       style={styles.container}
     >
-
       <Header
         currentDate={currentDate}
         setCurrentDate={setCurrentDate}
@@ -71,9 +62,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 10,
-    marginTop: StatusBar.currentHeight,
+    paddingTop: 20,
   },
-
 });
 
 export default App

@@ -6,32 +6,31 @@ import {
   Pressable,
 } from "react-native"
 import dayjs from 'dayjs';
-import DateTimePicker from '@react-native-community/datetimepicker'
+import DateTimePicker from 'react-native-modal-datetime-picker'
 import { Icon } from 'react-native-elements';
 
 const Header = ({
   currentDate,
   setCurrentDate
 }) => {
-  const [datePickerVisible, setDatePickerVisible] = useState(false)
+  const [datePickerVisibility, setDatePickerVisibility] = useState(false)
+  const handleCancelDatePicker = () => {
+    setDatePickerVisibility(false)
+  }
+  const handleConfirmDatePicker = (timestamp) => {
+    setCurrentDate(dayjs(timestamp))
+    handleCancelDatePicker()
+  }
+
   return (
     <View style={styles.header}>
-      {datePickerVisible &&
-        <DateTimePicker
-          value={currentDate.toDate()}
-          mode='date'
-          minimumDate={new Date()}
-          display='default'
-          onChange={({ nativeEvent: { timestamp }, type}) => {
-            if (type === "set") {
-              const currentDate = dayjs(timestamp)
-              setDatePickerVisible(false)
-              setCurrentDate(currentDate)
-            }
-            setDatePickerVisible(false)
-          }}
-        />
-      }
+      <DateTimePicker
+        isVisible={datePickerVisibility}
+        mode='date'
+        minimumDate={currentDate.toDate()}
+        onConfirm={handleConfirmDatePicker}
+        onCancel={handleCancelDatePicker}
+      />
       <Pressable
         onPress={() => {
           setCurrentDate(currentDate.subtract(1, 'day'))
@@ -44,7 +43,7 @@ const Header = ({
         />
       </Pressable>
       <Pressable
-        onPress={() => setDatePickerVisible(true)}
+        onPress={() => setDatePickerVisibility(true)}
       >
         <Text
           style={styles.headerTextStyle}
