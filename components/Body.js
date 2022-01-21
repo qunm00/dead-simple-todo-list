@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { 
   StyleSheet,
-  ToastAndroid,
   View,
   FlatList,
   Modal
@@ -18,6 +17,7 @@ const Body = ({
   isCurrent,
   fetchData
 }) => {
+  const [swiping, setSwiping] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [editTodo, setEditTodo] = useState(null)
 
@@ -31,13 +31,6 @@ const Body = ({
     await fetchData()
   }
 
-  const deleteButtonPressed = (task) => {
-    ToastAndroid.show(
-      `${task} deleted`,
-      ToastAndroid.SHORT
-    )
-  }
-
   const keyExtractor = item => item.id
   const renderItem = ({ item }) => (
     <TodoItem
@@ -46,9 +39,9 @@ const Body = ({
       isCurrent={isCurrent}
       cleanFromScreen={(id) => cleanFromScreen(id)}
       markCompleted={(id) => markCompleted(id)}
-      deleteButtonPressed={deleteButtonPressed}
       setModalVisible={setModalVisible}
       setTodo={setEditTodo}
+      swipingCheck={(swiping) => setSwiping(swiping)}
     />
   )
 
@@ -76,6 +69,7 @@ const Body = ({
         data={todos}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        scrollEnabled={!swiping}
       />
     </View>
   )

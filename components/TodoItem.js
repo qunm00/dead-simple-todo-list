@@ -1,4 +1,3 @@
-import { setStatusBarBackgroundColor } from 'expo-status-bar'
 import { 
   View,
   Text,
@@ -24,11 +23,12 @@ const TodoItem = ({
   isCurrent,
   cleanFromScreen,
   markCompleted,
-  deleteButtonPressed,
   setModalVisible,
-  setTodo
+  setTodo,
+  swipingCheck
 }) => {
   let lastTap = new Date()
+  let isSwiping = false
   const { id, task, status } = todo
 
   const handleDoubleTap = () => {
@@ -44,12 +44,13 @@ const TodoItem = ({
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => false, 
     onMoveShouldSetPanResponder: () => true, 
-    onResponderTerminationRequest: () => false,
+    onResponderTerminationRequest: () => true,
     onPanResponderGrant: (event, gesture) => {
       position.setOffset({x: position.x._value, y: 0})
       position.setValue({ x: 0, y: 0})
     },
     onPanResponderMove: (event, gesture) => {
+      // disableScrollView(true)
       if (gesture.dx >= SCROLL_THRESHOLD) {
         const x = gesture.dx - SCROLL_THRESHOLD
         position.setValue({ x, y: 0 })
@@ -60,7 +61,7 @@ const TodoItem = ({
     },
     onPanResponderRelease: (event, gesture) => {
       position.flattenOffset()
-      if (gesture.dx > 0) {
+      if (gesture.dx > SCROLL_THRESHOLD) {
         userSwipedRight()
       } else {
         userSwipedLeft()
@@ -71,8 +72,28 @@ const TodoItem = ({
         toValue: { x: 0, y: 0},
         useNativeDriver: false 
       }).start()
+      // }).start(() => disableScrollView(false))
     }
   })
+
+  const disableScrollView = (swiping) => {
+    // swipingCheck(swiping)
+    if (isSwiping !== swiping) {
+      swipingCheck(swiping)
+      isSwiping = swiping 
+    }
+  }
+
+  const showButton = (side) => {
+    const x = side === 'right' ? BUTTON_WIDTH + 60 : -BUTTON_WIDTH - 60 
+    Animated.timing(position, {
+      toValue: { x, y: 0},
+      duration: 600,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false
+    }).start()
+    // }).start(() => disableScrollView(false))
+  }
 
   const resetPosition = () => {
     Animated.timing(position, {
@@ -80,11 +101,27 @@ const TodoItem = ({
       duration: 200,
       useNativeDriver: false
     }).start()
+    // }).start(() => disableScrollView(false))
+  }
+
+  const completeSwipe = (dimension, callback) => {
+    const x = dimension === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH
+    Animated.timing(position, {
+      toValue: { x, y: 0 },
+      duration: FORCING_DURATION,
+      useNativeDriver: false
+    }).start(() => {
+        dimension === 'left'
+        ? cleanFromScreen(id)
+        : markCompleted(id)
+      }
+    )
+    callback()
   }
 
   const userSwipedLeft = () => {
     if (position.x._value <= -FORCE_TO_OPEN_THRESHOLD) {
-      completeSwipe('left', () => deleteButtonPressed(task))
+      completeSwipe('left', () => {})
     } else if (
       position.x._value <= -SHOW_BUTTON_THRESHOLD &&
       position.x._value > -FORCE_TO_OPEN_THRESHOLD
@@ -106,16 +143,6 @@ const TodoItem = ({
     } else {
       resetPosition()
     }
-  }
-
-  const showButton = (side) => {
-    const x = side === 'right' ? BUTTON_WIDTH + 60 : -BUTTON_WIDTH - 60 
-    Animated.timing(position, {
-      toValue: { x, y: 0},
-      duration: 600,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: false
-    }).start()
   }
 
   const getLeftButtonProps = () => {
@@ -146,21 +173,6 @@ const TodoItem = ({
       opacity,
       width
     }
-  }
-
-  const completeSwipe = (dimension, callback) => {
-    const x = dimension === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: FORCING_DURATION,
-      useNativeDriver: false
-    }).start(() => {
-        dimension === 'left'
-        ? cleanFromScreen(id)
-        : markCompleted(id)
-      }
-    )
-    callback()
   }
 
   if (!isCurrent || (status === STATUS.completed)) {
@@ -234,7 +246,7 @@ const TodoItem = ({
           ]}
         >
           <TouchableOpacity 
-            onPress={() => completeSwipe('left', () => deleteButtonPressed(task))}
+            onPress={() => completeSwipe('left', () => {})}
           >
             <Icon
               type="font-awesome"
